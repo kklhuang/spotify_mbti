@@ -1,42 +1,76 @@
-.App {
+.loading-screen {
+  margin-top: 26vh;
+}
+.loading-message{
   text-align: center;
+  vertical-align: middle;
+  color: #1DB954;
+  font-size: 28px;
+  margin-top: 15px;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.loading {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.results{
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.personality-side{
+  margin: 40px;
+  width: 50%;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.playlist-side{
+  margin: 40px;
+  width: 50%;
+  font-size: 30px;
 }
 
-div, button {
-  margin: 10px;
+.personality-header{
+  display: flex;
+  font-weight: bolder;
+  font-size: 30px;
+}
+
+.reg-personality-text{
+  color: #1DB954;
+}
+
+.personality-letters{
+  margin-top: 20px;
+  font-weight: bolder;
+  font-size: 30px;
+  color: #1DB954;
+}
+
+.personality-desc{
+  margin-top: 20px;
+}
+
+.player {
+  margin-top: 20px;
+}
+
+.make-playlist-section{
+  display:flex;
+}
+
+.make-playlist-link {
+  color: #1DB954;
+}
+
+.make-playlist-link:hover {
+  cursor: pointer;
+}
+
+.letter-description{
+  color: black
+}
+
+.first-letter, .second-letter, .third-letter, .fourth-letter{
+  display: flex;
 }
