@@ -1,1 +1,5 @@
 # spotify_mbti
+
+## Starting the app:
+client < npm start 
+authorization_code < node app.js
