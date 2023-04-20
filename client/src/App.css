@@ -65,6 +65,7 @@
 
 .make-playlist-link:hover {
   cursor: pointer;
+  text-decoration: underline;
 }
 
 .letter-description{
