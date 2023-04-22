@@ -1,6 +1,6 @@
 import logo from './logo.svg';
 import './App.css';
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import SpotifyWebApi from "spotify-web-api-js";
 import Navbar from './components/Navbar';
 import Home from './components/Home';
@@ -36,6 +36,7 @@ function App() {
   const [newPlaylist, setNewPlaylist] = useState("");
   const [personalityComplete, setPersonalityComplete] = useState(false)
   const oldYearVar = 2003; 
+  const buttonRef = useRef(null);
 
   // Personality scores 
   const [playlistScore, setPlaylistScore] = useState("");
@@ -98,6 +99,14 @@ function App() {
     })
   })
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+		calcVarietyScore()
+      	buttonRef.current.click();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [personalityComplete]);
+
   const makePersonalityPlaylist = async () => {
 	const response = await fetch(`https://api.spotify.com/v1/users/${userID}/playlists`, {
 	  method: 'POST',
@@ -109,17 +118,18 @@ function App() {
 		name: personality + " Playlist",
 		description: "The playlist that created your Spotify Listener's Personality! Made by Karen Huang :)"
 	  })
-	  
 	});
-
 	const data = await response.json();
-	setNewPlaylist(data.id)
-	const playlistURL = `https://open.spotify.com/playlist/${newPlaylist}?si=ad49785bb30f40ce`
-	window.open(playlistURL, "_blank");
-
+	await setNewPlaylist(data.id)
 	return data.id; // return the new playlist ID
-
   };
+
+  useEffect(() => {
+	if (newPlaylist !== ""){
+		const playlistURL = `https://open.spotify.com/playlist/${newPlaylist}?si=ad49785bb30f40ce`
+		window.open(playlistURL, "_blank");	
+	}
+  },[newPlaylist])
 
   const makePlaylist = async () => {
 	var uriArray = []
@@ -199,150 +209,122 @@ function App() {
     })
   }
 
-  const getTopTracksID = () => {
-    spotifyApi.getMyTopTracks({
-      limit: 50,
-      time_range: "medium_term"
-    }).then((response) => {
-      setNumTracks(response.items.length)
-      let tracksList = topTracks;
-      for (let i = 0; i < numTracks; i++){
-        let trackID = response.items[i].id
-        if(tracksList.indexOf(trackID) === -1){
-          tracksList.push(trackID); // song id 
-        }
-        
-      }
-      setTopTracks(tracksList);
-    })
+const getTopTracksID = async () => {
+	try {
+	  const response = await spotifyApi.getMyTopTracks({
+		limit: 50,
+		time_range: "medium_term"
+	  });
+  
+	  setNumTracks(response.items.length);
+	  let tracksList = topTracks;
+  
+	  for (let i = 0; i < numTracks; i++) {
+		let trackID = response.items[i].id;
+		if (tracksList.indexOf(trackID) === -1) {
+		  tracksList.push(trackID);
+		}
+	  }
+  
+	  setTopTracks(tracksList);
+	} catch (error) {
+	  console.error(error);
+	}
+  };  
+
+async function getAllArtists() {
+	await getTopTracksID();
+  
+	let listenedArtists = artists;
+	if (loggedIn) {
+	  if (topTracks[0] === undefined) {
+		await getTopTracksID();
+	  } else {
+		for (let i = 0; i < numTracks; i++) {
+		  try {
+			const response = await spotifyApi.getTrack(topTracks[i]);
+			let artistURI = response.artists[0].uri.split(':')[2];
+			if (listenedArtists.indexOf(artistURI) === -1) {
+			  listenedArtists.push(artistURI);
+			}
+		  } catch (error) {
+			console.error(error);
+		  }
+		}
+		setArtists(listenedArtists);
+		setNumArtists(listenedArtists.length);
+	  }
+	}
   }
 
-  async function fetchAllArtists() {
-    getTopTracksID()
-    let listenedArtists = artists;
-    for (let i = 0; i < numTracks; i++){
-      const response = await fetch(`https://api.spotify.com/v1/tracks/${topTracks[i]}`, {
-        headers: {
-          'Authorization': `Bearer ${spotifyToken}`
-        }
-      }); 
-      const json = await response.json();  
-      const artistURI = json.artists[0].uri.split(':')[2];
-      if(listenedArtists.indexOf(artistURI) === -1) {
-        listenedArtists.push(artistURI);
-      }   
-    } 
-    setArtists(listenedArtists);
-    setNumArtists(listenedArtists.length)
-  }
-
-  async function getAllArtists() {
-    await getTopTracksID()
-    let listenedArtists = artists;
-    if(loggedIn){
-      if (topTracks[0] === undefined) {
-        await getTopTracksID()
-      } else {
-        for (let i = 0; i < numTracks; i++){
-          spotifyApi.getTrack(topTracks[i]).then((response) => {
-            let artistURI = response.artists[0].uri.split(':')[2];
-            if(listenedArtists.indexOf(artistURI) === -1) {
-              listenedArtists.push(artistURI);
-            }      
-          }).catch(e => {
-          })
-        }
-        setArtists(listenedArtists);
-        setNumArtists(listenedArtists.length)
-      }
-    }
-  }
-
-  useEffect(() => {
-    getAllArtists()
-    console.log("here")
-  },[topTracks])
-
-  useEffect(() => {
-    console.log("numtracks", numTracks)
-  },[numTracks])
-  useEffect(() => {
-    console.log("artists length", numArtists)
-  },[numArtists])
-
-  const getAllGenres = () => {
-	console.log("getting genres")
-	console.log(genres)
-    let listenedGenres = genres; 
-	console.log(numArtists)
-    for (let i = 0; i < numArtists; i++){
-      spotifyApi.getArtist(artists[i]).then((response) => {
-        let artistGenres = response.genres;
-        for (let j = 0; j < response.genres.length; j++){
-          let currentGenre = artistGenres[j];
-          if(listenedGenres.indexOf(currentGenre) === -1) {
-            listenedGenres.push(currentGenre);
-          }      
-        }
-      }).catch(e => {
-      })
-    }
-    setGenres(listenedGenres);
-    setNumGenres(listenedGenres.length)
-	console.log("set genres", listenedGenres.length)
-	setPlaylistsAndGenres(listenedGenres.length+numArtists)
-  }
+async function getAllGenres() {  
+	let listenedGenres = genres;
+  
+	for (let i = 0; i < numArtists; i++) {
+	  try {
+		const response = await spotifyApi.getArtist(artists[i]);
+		let artistGenres = response.genres;
+  
+		for (let j = 0; j < response.genres.length; j++) {
+		  let currentGenre = artistGenres[j];
+		  if (listenedGenres.indexOf(currentGenre) === -1) {
+			listenedGenres.push(currentGenre);
+		  }
+		}
+	  } catch (error) {
+		console.error(error);
+	  }
+	}
+  
+	setGenres(listenedGenres);
+	setNumGenres(listenedGenres.length);
+	setPlaylistsAndGenres(listenedGenres.length + numArtists);
+}
 
   useEffect(() => {
 	getAllGenres()
   },[numArtists])
 
-  useEffect(() => {
-	calcVarietyScore()
-  },[genres])
-
-  const getPlaylists = () => {
-    let user = spotifyApi.getMe();
-    spotifyApi.getUserPlaylists({
-      user_id: user,
-      limit: 50
-    }).then((response) => {
-      setNumPlaylists(response.items.length)
-    }) 
+async function getPlaylists() {
+	let user = await spotifyApi.getMe();
+	const response = await spotifyApi.getUserPlaylists({
+	  user_id: user,
+	  limit: 50,
+	});
+	setNumPlaylists(response.items.length);
   }
-
   
   // For playlist score:
-  const calcPlaylistScore = () => {
-    getPlaylists()
-    if (numPlaylists <= 10) {
-      setPlaylistScore('M');
-    } else {
-      setPlaylistScore('D');
-    }
-  }
+const calcPlaylistScore = () => {
+	getPlaylists()
+	if (numPlaylists <= 10) {
+		setPlaylistScore('M');
+	} else {
+		setPlaylistScore('D');
+	}
+}
 
-  useEffect(() => {
-    if (numPlaylists <= 10) {
-      setPlaylistScore('M');
-    } else {
-      setPlaylistScore('D');
-    }
-    // console.log(numPlaylists)
-  },[numPlaylists])
+useEffect(() => {
+	if (numPlaylists <= 10) {
+		setPlaylistScore('M');
+	} else {
+		setPlaylistScore('D');
+	}
+	// console.log(numPlaylists)
+},[numPlaylists])
 
-  // For variety score:
-  const calcVarietyScore = () => {
-    getAllArtists();
-    getAllGenres();
-    var score = playlistsAndGenres;
+// For variety score:
+const calcVarietyScore = () => {
+	getAllArtists();
+	getAllGenres();
+	var score = playlistsAndGenres;
 	console.log("score", score)
-    if (score <= 28) {
-      setVarietyScore('L');
-    } else {
-      setVarietyScore('E');
-    }
-  }
+	if (score <= 28) {
+		setVarietyScore('L');
+	} else {
+		setVarietyScore('E');
+	}
+}
 
   useEffect(()=>{
 	console.log("variety score", varietyScore)
@@ -363,8 +345,8 @@ function App() {
   }
 
   // For time score:  
-  const calcTimeScore = () => {
-    var oldies = fetchTopTrackDates();
+  async function calcTimeScore () {
+    var oldies = await fetchTopTrackDates();
     if (oldies >= 10) {
       setTimeScore('V');
     } else {
@@ -381,13 +363,10 @@ function App() {
     calcVarietyScore()
     calcPopularityScore()
     calcTimeScore()
-	console.log(numGenres)
-    console.log(playlistScore, varietyScore, popularityScore, timeScore)
     setPersonality(playlistScore.concat(varietyScore, popularityScore, timeScore))
   }
 
   useEffect(() => {
-    console.log(personality)
 	if (personality.length === 4){
 		setPersonalityComplete(true)
 	}
@@ -403,9 +382,18 @@ function App() {
 	giveSpotifyMBTI()
   }, [personality])
 
-//   useEffect(() => {
-// 	giveSpotifyMBTI()	
-//   }, [loggedIn])
+useEffect(() => {
+	if (loggedIn){
+		const timeout = setTimeout(() => {
+			giveSpotifyMBTI()
+			setPersonalityComplete(true);
+		}, 3000);
+		
+		return () => {
+		clearTimeout(timeout);
+		};
+	}
+}, [loggedIn]);
 
 // loggedIn && has personality set 
   return (
@@ -422,9 +410,11 @@ function App() {
 	  }
 	  {loggedIn && 
 	  <div>
-		{loggedIn && personalityComplete ?
+		{loggedIn && personalityComplete &&
 			<div>
-				<button onClick={() => giveSpotifyMBTI()}>Get MBTI!</button>
+				<div className='mbti-button'>
+					<button ref={buttonRef} onClick={() => giveSpotifyMBTI()}>Get MBTI!</button>
+				</div>
 				<div className='results'>
 					<div className='personality-side'>
 						<div className='personality-header'>
@@ -491,10 +481,7 @@ function App() {
 
 				</div>
 			</div>
-		: 
-			<div>
-				<button onClick={() => giveSpotifyMBTI()}>Get MBTI!</button>
-			</div>}
+		}
 		</div>
 		}
       <Footer />
