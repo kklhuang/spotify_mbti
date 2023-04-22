@@ -2,7 +2,7 @@
 cd client && npm i
 
 # Install dependencies for the backend
-cd ../authorization_code && npm i
+cd ../auth && npm i
 
 # Start the backend
 node app.js &
