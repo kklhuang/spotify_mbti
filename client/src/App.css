@@ -75,3 +75,7 @@
 .first-letter, .second-letter, .third-letter, .fourth-letter{
   display: flex;
 }
+
+.mbti-button {
+  display: none;
+}
