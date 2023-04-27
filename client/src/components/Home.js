@@ -13,7 +13,7 @@ const Home = () => {
             </div>
             <div className="spotify-login">
                 <button className="login-button">
-                    <a href="https://spotify-mbti-frontend-4yy6lujjt-kklhuang.vercel.app/login">Log in with Spotify here</a>
+                    <a href="https://spotify-mbti.vercel.app/login">Log in with Spotify here</a> // goes to backend for login
                 </button>
             </div>
         </div>
