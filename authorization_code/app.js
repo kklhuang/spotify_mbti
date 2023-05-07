@@ -18,8 +18,8 @@ var cookieParser = require('cookie-parser');
 
 var client_id = 'f10c5f99fc0b45fbbfd63f728bf2b040'; // Your client id
 var client_secret = 'a73db79db2c74e0f9f3ea021016fcc06'; // Your secret
-// var redirect_uri = 'http://localhost:8888/callback/'; // Your redirect uri
-var redirect_uri = 'https://spotify-mbti.vercel.app/callback'; // Your redirect uri
+var redirect_uri = 'http://localhost:8888/callback/'; // Your redirect uri
+// var redirect_uri = 'https://spotify-mbti.vercel.app/callback'; // Your redirect uri
 
 /**
  * Generates a random string containing numbers and letters
@@ -108,13 +108,15 @@ app.get('/callback', function(req, res) {
         });
 
         // we can also pass the token to the browser to make requests from there
-        res.redirect('https://spotify-mbti-frontend.vercel.app/#' +
+        // res.redirect('https://spotify-mbti-frontend.vercel.app/#' +
+        res.redirect('http://localhost:3000/#' +
           querystring.stringify({
             access_token: access_token,
             refresh_token: refresh_token
           }));
       } else {
-        res.redirect('https://spotify-mbti-frontend.vercel.app/#' +
+        // res.redirect('https://spotify-mbti-frontend.vercel.app/#' +
+        res.redirect('http://localhost:3000/#' +
           querystring.stringify({
             error: 'invalid_token'
           }));
@@ -148,4 +150,4 @@ app.get('/refresh_token', function(req, res) {
 });
 
 console.log('Listening on 8888');
-// app.listen(port);
+app.listen(port);
